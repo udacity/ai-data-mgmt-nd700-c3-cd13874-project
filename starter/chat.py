@@ -1,12 +1,8 @@
 import warnings
 warnings.filterwarnings("ignore", message="Field.*conflict with protected namespace")
 
-from azure.keyvault.secrets import SecretClient
-from azure.identity import InteractiveBrowserCredential
-
-from langchain_openai import AzureChatOpenAI
-from nemoguardrails import <TODO 1: use LLMRails and RailsConfig libraries>
-from nemoguardrails.actions import action
+from azure.keyvault.secrets import <TODO 1: use SecretClient library to connect to Azure Key Vault>
+from azure.identity import DeviceCodeCredential
 
 from agents.structured_data_agent import <TODO 2: use Structured Data Agent>
 from agents.unstructured_data_agent import <TODO 3: use Unstructured Data Agent>
@@ -29,8 +25,6 @@ client = SecretClient(vault_url=KVUri, credential=credential)
 # ============================================================
 
 <TODO 8: define all your secrets stored in the Azure key vault for each of the resources>
-nemoazureendpoint = retrieved_secret = client.get_secret("XXXXXX").value
-nemoazurekey = retrieved_secret = client.get_secret("XXXXXX").value
 
 structuredazureendpoint = retrieved_secret = client.get_secret("XXXXXX").value
 structuredazureapikey = retrieved_secret = client.get_secret("XXXXXX").value
@@ -55,47 +49,37 @@ multimodalazurecontentsafetykey = retrieved_secret = client.get_secret("XXXXXX")
 
 class AgentChatManager:
     def __init__(self):
-        self._<TODO 9: load guardrails>
-        self._<TODO 10: load_agents()>
-        self._<TODO 11: register_actions()>
-
-    # -------------------------
-    #  Guardrails
-    # -------------------------
-    def _load_guardrails(self):
-        # Configure the Azure LLM parameters
-        azure_llm = AzureChatOpenAI(
-            <TODO 12: pass the Azure LLM parameters>
-        )
-        config = RailsConfig.from_path("./config")
-        self.rails = LLMRails(config, llm=azure_llm, verbose=False)
+        self.<TODO 9: load _load_agents()>
 
     # -------------------------
     #  Agents
     # -------------------------
-    def _load_agents(self):
+    def <TODO 10: define the _load_agents method to initialize each of the agents with the appropriate secrets and parameters>
 
-        print("\nLoading Strucutred Data Agent")
+        print("\nLoading Structured Data Agent")
         print("-------------------------------")
-        self.structured = StructuredDataAgent(
+        self.structured = <TODO 11: initialize the structured data agent with the appropriate parameters, including the database connection parameters and Azure LLM parameters>
             azure_endpoint=structuredazureendpoint,
             api_key=structuredazureapikey,
             deployment="gpt-4.1-mini",
             db_config={
-                <TODO 13: pass the database connection parameters for the structured data agent: host, database name, user, password, port (5432)>
+                "host": structuredpostgresqlhost,
+                "dbname": structuredpostgresqldbname,
+                "user": structuredpostgresqluser,
+                "password": structuredpostgresqlpassword,
+                "port": 5432,
             }
         )
 
-        print("\nLoading Unstrucutred Data Agent")
+        print("\nLoading Unstructured Data Agent")
         print("---------------------------------")
-        self.unstructured = UnstructuredDataAgent(
-            <TODO 14: pass the connection parameters for the unstructured data agent: mongo_uri, database name, collection name, chroma path for local storage of the vector database, Azure endpoint and key for generating embeddings and moderating content>
-            mongo_uri=XXXXXXX,
-            db_name=uXXXXXXX,
-            collection_name=XXXXXXX,
-            chroma_path=XXXXXX,
-            azure_endpoint=XXXXXX,
-            azure_key=XXXXXX,
+        self.unstructured = <TODO 12: initialize the unstructured data agent with the appropriate parameters, including MongoDB connection parameters, Azure LLM parameters, and ChromaDB local storage path>
+            mongo_uri=unstructuredmongourl,
+            db_name=unstructureddbname,
+            collection_name=unstructuredcollectionname,
+            chroma_path="./data/chroma_db_storage",
+            azure_endpoint=unstructuredazureendpoint,
+            azure_key=unstructuredazurekey,
             azure_api_version="2023-06-01-preview",
             embedding_deployment="text-embedding-ada-002",
             chat_deployment="gpt-4.1-mini",
@@ -104,50 +88,149 @@ class AgentChatManager:
 
         print("\nLoading Multimodal Data Agent")
         print("-------------------------------")
-        self.multimodal = MultimodalDataAgent(
-            <TODO 15: pass the connection parameters for the multimodal data agent: Azure connection string for accessing the blob storage where the images are stored, and Azure endpoint and key for content safety moderation>
-            azure_conn_str=XXXXXXX,
-            container_name=XXXXXXX,
-            content_safety_endpoint = XXXXXXX,
-            content_safety_key = XXXXXXX
+        self.multimodal = <TODO 13: initialize the multimodal data agent with the appropriate parameters, including Azure Blob Storage connection parameters and Azure content safety moderation parameters>
+            azure_conn_str=multimodalazureconnstring,
+            container_name="houses",
+            content_safety_endpoint=multimodalazurecontentsafetyendpoint,
+            content_safety_key=multimodalazurecontentsafetykey
         )
 
     # -------------------------
-    #  Register Guardrail Actions
+    #  Routing
     # -------------------------
-    def _register_actions(self):
+    def _route_query(self, user_message: str) -> str:
+        """
+        Route user query to one of:
+        - structured
+        - unstructured
+        - multimodal
 
-        @action(name="structuredDataAction()")
-        async def structured_action(prompt):
-            result = <TODO 16: call the ask method> 
-            return result["response"]
+        This is a rule-based router. You can extend it later.
+        """
+        msg = user_message.lower().strip()
 
-        @action(name="unstructuredDataAction()")
-        async def unstructured_action(prompt):
-            return <TODO 17: call the ask method with PII enabled>
+        multimodal_keywords = [
+            "house like mine",
+            "find me a house like mine",
+            "show me a house like mine",
+            "similar house",
+            "similar image",
+            "image",
+            "photo",
+            "picture",
+            "looks like",
+            "visual",
+        ]
 
-        @action(name="multimodalDataAction()")
-        async def multimodal_action(prompt):
-            query_image = <TODO 18: assign one of two available images in the project root folder> 
-            matches, query_img = <TODO 19: call the image similarity method> 
-            print("\nTop matches:")
-            for score, path, address in matches:
-                print(f"{address} | similarity: {score:.4f}")
-            self.multimodal.show_results(query_img, matches)
-            return matches
+        structured_keywords = [
+            "demographic",
+            "demographics",
+            "price",
+            "home price",
+            "most expensive",
+            "average",
+            "median",
+            "count",
+            "how many",
+            "highest",
+            "lowest",
+            "neighborhood",
+            "income",
+            "population",
+            "sql",
+            "database",
+        ]
 
-        <TODO 20: register the actions with the guardrails instance>
-        self.rails.register_action(structured_action, "XXXXXXXXX")
-        self.rails.register_action(unstructured_action, "XXXXXXXXX")
-        self.rails.register_action(multimodal_action, "XXXXXXXXX")
+        unstructured_keywords = [
+            "permit",
+            "approved",
+            "document",
+            "documents",
+            "text",
+            "restaurant",
+            "permit approved",
+            "notes",
+            "report",
+            "permit document",
+        ]
+
+        # Priority 1: multimodal
+        if any(keyword in msg for keyword in multimodal_keywords):
+            return <TODO 14: return the name of the multimodal agent>
+
+        # Priority 2: unstructured
+        if any(keyword in msg for keyword in unstructured_keywords):
+            return <TODO 15: return the name of the unstructured agent>
+
+        # Priority 3: structured
+        if any(keyword in msg for keyword in structured_keywords):
+            return <TODO 16: return the name of the structured agent>
+
+        # Default fallback
+        return "unstructured"
+
+    # -------------------------
+    #  Agent wrappers
+    # -------------------------
+    def _run_structured(self, prompt: str) -> str:
+        result = self.structured.ask(prompt, verbose=False, run_bias_audit=True)
+
+        if isinstance(result, dict):
+            return result.get("response", str(result))
+
+        return str(result)
+
+    def _run_unstructured(self, prompt: str) -> str:
+        result = self.unstructured.ask(prompt, run_pii_audit=True)
+
+        if isinstance(result, dict):
+            return result.get("response", str(result))
+
+        return str(result)
+
+    def _run_multimodal(self, prompt: str) -> str:
+        """
+        Right now your original code ignored the prompt and always used
+        query-house-2.jpg. Keeping that behavior here for parity.
+        """
+        query_image = "query-house-2.jpg" # You can change this to "query-house-1.jpg" to test with the other image
+        matches, query_img = self.multimodal.find_similar(query_image)
+
+        print("\nTop matches:")
+        for score, path, address in matches:
+            print(f"{address} | similarity: {score:.4f}")
+
+        self.multimodal.show_results(query_img, matches)
+
+        if not matches:
+            return "I could not find similar houses."
+
+        lines = ["Here are the top similar houses I found:"]
+        for score, path, address in matches[:5]:
+            lines.append(f"- {address} (similarity: {score:.4f})")
+
+        return "\n".join(lines)
 
     # -------------------------
     #  Chat Interface
     # -------------------------
-    def chat(self, user_message: str):
-        messages = [{"role": "user", "content": user_message}]
-        response = self.rails.generate(messages=messages)
-        return response["content"]
+    def chat(self, user_message: str) -> str:
+        route = self._route_query(user_message)
+        print(f"[Router] Selected agent: {route}")
+
+        try:
+            if route == <TODO 17: check if the route is the structured agent>:
+                return self._run_structured(user_message)
+
+            if route == <TODO 18: check if the route is the unstructured agent>:
+                return self._run_unstructured(user_message)
+
+            if route == <TODO 19: check if the route is the multimodal agent>:
+                return self._run_multimodal(user_message)
+
+            return "I could not determine the correct agent."
+        except Exception as e:
+            return f"An error occurred while processing your request with the {route} agent: {e}"
 
 
 # ============================================================
@@ -171,12 +254,12 @@ if __name__ == "__main__":
              |__________________________________________________|
     """
     print(banner)
-    print("\n This AI-powered assistant provides automatically generated responses. " \
-    "Please use discretion, as answers may contain inaccuracies or errors.\n")
+    print("\n This AI-powered assistant provides automatically generated responses. "
+          "Please use discretion, as answers may contain inaccuracies or errors.\n")
     print("Data comes from a structured demographics database, permit documents in NoSQL, and images stored in Azure.")
     print("Data remains in its original systems and is not copied into the assistant.")
     print("Embeddings and other AI artifacts are generated at runtime and are not permanently stored.")
-    
+
     chat = AgentChatManager()
 
     print("\n\n--------------------------------")

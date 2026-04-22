@@ -1,0 +1,30 @@
+# Azure services
+azure-identity
+azure-keyvault-secrets
+azure-storage-blob
+azure-ai-contentsafety
+
+# Database drivers
+pymongo
+psycopg[binary]
+sqlalchemy
+
+# LangChain ecosystem
+langchain-community
+langchain-openai
+langchain-chroma
+langgraph
+
+# ML & embeddings
+torch
+transformers
+
+# Ethical safeguards
+fairlearn
+presidio-analyzer
+
+# Data & visualization
+pandas
+numpy
+matplotlib
+Pillow

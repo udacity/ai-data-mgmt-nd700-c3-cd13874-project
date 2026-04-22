@@ -10,7 +10,6 @@
 # psql -U postgres -d postgres
 # \dt
 
-import os
 import psycopg
 import csv
 from pathlib import Path
@@ -24,7 +23,7 @@ DB_CONFIG = {
     "host": "structureddata.postgres.database.azure.com",
     "dbname": "postgres",
     "user": "structureddataadmin",
-    "password": os.environ["STRUCTURED_PG_PASSWORD"],
+    "password": "L@ndmark1",
     "port": 5432
 }
 
