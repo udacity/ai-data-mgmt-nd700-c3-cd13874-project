@@ -1,7 +1,0 @@
-{
-    "yaml.schemas": {
-        "file:///Users/prachi.dawer/Documents/GitHub/ai-data-mgmt-nd700-c3-cd13874-project/.vscode/schemas/concept.schema.json": "lessons/*/concepts/*/concept.yaml",
-        "file:///Users/prachi.dawer/Documents/GitHub/ai-data-mgmt-nd700-c3-cd13874-project/.vscode/schemas/lesson.schema.json": "lessons/*/lesson.yaml",
-        "file:///Users/prachi.dawer/Documents/GitHub/ai-data-mgmt-nd700-c3-cd13874-project/.vscode/schemas/course.schema.json": "course.yaml"
-    }
-}
