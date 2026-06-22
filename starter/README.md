@@ -1,14 +1,6 @@
 # Building a Multi-Agent AI Assistant with Azure and chat manager
 
-This project demonstrates a data management framework for Generative AI, focusing on how multi-agent systems can derive neighborhood insights without compromising data integrity or location.
-
- - Federated Data Strategy: Rather than centralizing information, this architecture manages data at the source. It proves that GenAI can be high-performing without the security risks of mass data movement.
-
- - Data Sovereignty & Control: The system is built on the principle that data owners must never lose custody. By keeping data at its origin, the management layer ensures absolute control and ethical handling.
-
- - Compliance-Driven Architecture: Designed specifically to address the "data friction" in AI—ensuring every interaction complies with evolving global privacy laws and AI governance standards.
-
- - Decentralized Integration: Showcases how to orchestrate multiple, disparate data streams into a unified AI output while maintaining strict boundaries between data providers.
+A command-line assistant that answers natural-language questions about five neighborhoods by routing each query to one of three specialised agents: a **Structured Data Agent** (PostgreSQL demographic and housing data with Fairlearn bias auditing), an **Unstructured Data Agent** (MongoDB permit documents with Presidio PII detection), and a **Multimodal Data Agent** (Azure Blob Storage house images with Azure AI Content Safety). A central chat manager classifies the user's intent and dispatches to the right agent; each agent runs its own ethical check before returning.
 
 ---
 
@@ -21,7 +13,7 @@ In this lesson, you'll learn to build an AI-powered assistant that safely querie
 Learning objectives:
 - Implement multi-agent architecture for handling different data modalities
 - Integrate Azure services for secure AI applications
-- Apply safety guardrails to prevent harmful outputs
+- Apply per-agent ethical checks (bias auditing, PII detection, content safety)
 - Build a conversational interface for natural language queries
 
 ### Prerequisites

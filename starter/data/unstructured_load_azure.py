@@ -2,13 +2,30 @@ import os
 from pymongo import MongoClient
 import PyPDF2
 
+from azure.keyvault.secrets import SecretClient
+from azure.identity import DeviceCodeCredential
+
+# ---------- CONFIG ----------
+
+# TODO: Replace with the name of your Azure Key Vault.
+keyVaultName = "<your-keyvault-name>"
+KVUri = f"https://{keyVaultName}.vault.azure.net/"
+
+print("Connecting to Azure for authentication.")
+credential = DeviceCodeCredential()
+kv_client = SecretClient(vault_url=KVUri, credential=credential)
+
+mongo_uri = kv_client.get_secret("unstructuredmongourl").value
+db_name = kv_client.get_secret("unstructureddbname").value
+collection_name = kv_client.get_secret("unstructuredcollectionname").value
+
+
 def load_pdfs_to_mongo(folder_path="unstructured"):
     # Connect to MongoDB
-    client = MongoClient("mongodb+srv://unstructureddataadmin:Landmark1@unstructureddatacluster.mongocluster.cosmos.azure.com/?tls=true&authMechanism=SCRAM-SHA-256&retrywrites=false&maxIdleTimeMS=120000")
+    client = MongoClient(mongo_uri)
 
     # Create or access the database and collection
-    db = client["documents"]
-    collection_name = "permits"
+    db = client[db_name]
 
     # Explicitly create collection if it doesn't exist
     if collection_name not in db.list_collection_names():
@@ -41,7 +58,7 @@ def load_pdfs_to_mongo(folder_path="unstructured"):
 
             collection.insert_one(doc)
 
-    print("All PDFs loaded into MongoDB (documents.permits).")
+    print(f"All PDFs loaded into MongoDB ({db_name}.{collection_name}).")
 
 
 if __name__ == "__main__":

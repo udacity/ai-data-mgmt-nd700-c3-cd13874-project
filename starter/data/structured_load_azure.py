@@ -15,16 +15,27 @@ import csv
 from pathlib import Path
 import re
 
+from azure.keyvault.secrets import SecretClient
+from azure.identity import DeviceCodeCredential
+
 # pip install "psycopg[binary]"
 
 # ---------- CONFIG ----------
 
+# TODO: Replace with the name of your Azure Key Vault.
+keyVaultName = "<your-keyvault-name>"
+KVUri = f"https://{keyVaultName}.vault.azure.net/"
+
+print("Connecting to Azure for authentication.")
+credential = DeviceCodeCredential()
+kv_client = SecretClient(vault_url=KVUri, credential=credential)
+
 DB_CONFIG = {
-    "host": "structureddata.postgres.database.azure.com",
-    "dbname": "postgres",
-    "user": "structureddataadmin",
-    "password": "L@ndmark1",
-    "port": 5432
+    "host": kv_client.get_secret("structuredpostgresqlhost").value,
+    "dbname": kv_client.get_secret("structuredpostgresqldbname").value,
+    "user": kv_client.get_secret("structuredpostgresqluser").value,
+    "password": kv_client.get_secret("structuredpostgresqlpassword").value,
+    "port": 5432,
 }
 
 DATA_FOLDER = Path("./structured")  # folder containing your CSV datasets
