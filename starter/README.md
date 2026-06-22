@@ -134,6 +134,8 @@ client = SecretClient(vault_url=KVUri, credential=credential)
 - Secrets are retrieved at runtime, not stored in code
 - Supports multiple Azure services with different credentials
 
+Once Key Vault is populated, seed the databases by running `data/structured_load_azure.py` and `data/unstructured_load_azure.py` — replace `keyVaultName` at the top of each script with your vault name first.
+
 ### Step 2: Initializing the Chat Manager and Agents
 
 The AgentChatManager coordinates all components and loads specialized agents for different data types.
